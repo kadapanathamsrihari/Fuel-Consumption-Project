@@ -13,13 +13,42 @@ import matplotlib.pyplot as plt
 from flask import Flask, request, send_file
 
 app = Flask(__name__)
+
 @app.route("/")
 def home():
-    return "Fuel Consumption Analysis System"
+    return {
+        "message": "Welcome to Fuel Consumption Analysis System",
+        "available_features": {
+            "Database": {
+                "To test connection use this": "/test-db"
+            },
+            "Vehicle Management": {
+                "TO View All Vehicles": "/vehicles"
+            },
+            "Fuel Records": {
+                "To View All Records": "/fuel-records",
+                "Filter By Vehicle on Selected ID": "/fuel-records?vehicle_id=1"
+            },
+            "Reports": {
+                "For All Reports": "/reports",
+                "Mileage Report only": "/reports/mileage",
+                "Expense Report only": "/reports/expenses",
+                "Monthly Report only": "/reports/monthly"
+            },
+            "Pandas Analysis": {
+                "Expense Analysis": "/analysis/expenses"
+            },
+            "Matplotlib Charts": {
+                "Generate Expense Chart": "/charts/expenses",
+                "View Expense Chart Image": "/charts/expenses/image"
+            }
+        }
+    }
 
 from fuel_routes import fuel_bp
 
 app.register_blueprint(fuel_bp)
+
 
 
 @app.route("/test-db")
@@ -254,9 +283,9 @@ def expense_chart():
     query = """
         SELECT
             v.vehicle_code,
-            SUM(f.total_cost) AS total_expense
+            COALESCE(SUM(f.total_cost), 0) AS total_expense
         FROM vehicles v
-        JOIN fuel_records f
+        LEFT JOIN fuel_records f
             ON v.vehicle_id = f.vehicle_id
         GROUP BY v.vehicle_id, v.vehicle_code
         ORDER BY v.vehicle_code
