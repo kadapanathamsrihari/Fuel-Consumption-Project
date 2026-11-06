@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Reports | Fuel Tracker{% endblock %}
+
+{% block content %}
+<section class="welcome">
+    <h2>Reports and insights</h2>
+    <p>Explore mileage, fuel spend, and monthly usage across your fleet.</p>
+</section>
+
+<section class="dashboard-cards" aria-label="Available reports">
+    <article class="card">
+        <h3>Mileage report</h3>
+        <p>Distance travelled and fuel efficiency.</p>
+        <a class="button" href="{{ url_for('mileage_report') }}">View mileage</a>
+    </article>
+    <article class="card">
+        <h3>Expense report</h3>
+        <p>Compare total fuel spend by vehicle.</p>
+        <a class="button" href="{{ url_for('expenses_report') }}">View expenses</a>
+    </article>
+    <article class="card">
+        <h3>Monthly report</h3>
+        <p>Review fuel use and spend over time.</p>
+        <a class="button" href="{{ url_for('monthly_report') }}">View monthly report</a>
+    </article>
+    <article class="card">
+        <h3>Expense charts</h3>
+        <p>See how each vehicle contributes to total fuel spend.</p>
+        <a class="button" href="{{ url_for('charts_page') }}">Explore charts</a>
+    </article>
+</section>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Expense Report | Fuel Tracker{% endblock %}
+
+{% block content %}
+<section class="welcome">
+    <h2>Fuel expense report</h2>
+    <p>Review total fuel volume, fill-ups, and spend across your fleet.</p>
+</section>
+
+<section class="dashboard-cards" aria-label="Expense report totals">
+    <article class="card">
+        <h3>Total fuel</h3>
+        <p>{{ "%.1f"|format(summary.total_litres|float) }} L</p>
+    </article>
+    <article class="card">
+        <h3>Total spend</h3>
+        <p>₹{{ "%.2f"|format(summary.total_expense|float) }}</p>
+    </article>
+    <article class="card">
+        <h3>Total fill-ups</h3>
+        <p>{{ summary.total_fillings }}</p>
+    </article>
+</section>
+
+<section class="card">
+    <h3>Spend by vehicle</h3>
+    {% if records %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Vehicle</th>
+                    <th>Vehicle type</th>
+                    <th>Fill-ups</th>
+                    <th>Fuel (L)</th>
+                    <th>Total spend (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td>{{ record.vehicle_code }}</td>
+                    <td>{{ record.vehicle_type }}</td>
+                    <td>{{ record.total_fillings }}</td>
+                    <td>{{ "%.1f"|format(record.total_litres|float) }}</td>
+                    <td>₹{{ "%.2f"|format(record.total_fuel_expense|float) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p>No fuel expense records are available.</p>
+    {% endif %}
+    <a class="button secondary" href="{{ url_for('reports_index') }}">Back to reports</a>
+</section>
+{% endblock %}

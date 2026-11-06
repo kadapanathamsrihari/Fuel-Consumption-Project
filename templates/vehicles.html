@@ -1,0 +1,243 @@
+
+{% extends "base.html" %}
+
+{% block title %}Vehicle Management | Fuel Tracker{% endblock %}
+
+{% block content %}
+
+<section class="welcome">
+    <h2>Vehicle Management</h2>
+    <p>Add, view, update and delete your registered vehicles.</p>
+</section>
+
+<section class="card fuel-form-card">
+    <h3 id="formTitle">Add New Vehicle</h3>
+
+    <form id="vehicleForm">
+        <input type="hidden" id="vehicle_id">
+
+        <label for="vehicle_code">Vehicle Code</label>
+        <input type="text" id="vehicle_code"
+               placeholder="Example: VEH006" required>
+
+        <label for="vehicle_type">Vehicle Type</label>
+        <select id="vehicle_type" required>
+            <option value="">Select vehicle type</option>
+            <option value="Car">Car</option>
+            <option value="Bike">Bike</option>
+            <option value="Truck">Truck</option>
+            <option value="Van">Van</option>
+            <option value="Other">Other</option>
+        </select>
+
+        <label for="fuel_type">Fuel Type</label>
+        <select id="fuel_type" required>
+            <option value="">Select fuel type</option>
+            <option value="Petrol">Petrol</option>
+            <option value="Diesel">Diesel</option>
+            <option value="CNG">CNG</option>
+            <option value="Electric">Electric</option>
+            <option value="Battery">Battery</option>
+        </select>
+
+        <button type="submit" class="button" id="saveButton">
+            Add Vehicle
+        </button>
+
+        <button type="button" class="button secondary"
+                id="cancelButton" hidden>
+            Cancel Edit
+        </button>
+    </form>
+
+    <p id="formMessage" role="status"></p>
+</section>
+
+<section class="card">
+    <h3>Registered Vehicles</h3>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Vehicle Code</th>
+                    <th>Vehicle Type</th>
+                    <th>Fuel Type</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody id="vehiclesBody">
+                <tr>
+                    <td colspan="5">Loading vehicles...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p id="vehiclesMessage" role="status"></p>
+</section>
+
+<script>
+const form = document.getElementById("vehicleForm");
+const message = document.getElementById("formMessage");
+const vehiclesBody = document.getElementById("vehiclesBody");
+const vehicleId = document.getElementById("vehicle_id");
+const saveButton = document.getElementById("saveButton");
+const cancelButton = document.getElementById("cancelButton");
+
+async function loadVehicles() {
+    try {
+        const response = await fetch("/vehicles");
+
+        if (!response.ok) {
+            throw new Error("Could not load vehicles");
+        }
+
+        const vehicles = await response.json();
+        vehiclesBody.replaceChildren();
+
+        if (vehicles.length === 0) {
+            vehiclesBody.innerHTML =
+                '<tr><td colspan="5">No vehicles found.</td></tr>';
+            return;
+        }
+
+        vehicles.forEach(vehicle => {
+            const row = document.createElement("tr");
+
+            [
+                vehicle.vehicle_id,
+                vehicle.vehicle_code,
+                vehicle.vehicle_type,
+                vehicle.fuel_type
+            ].forEach(value => {
+                const cell = document.createElement("td");
+                cell.textContent = value ?? "";
+                row.appendChild(cell);
+            });
+
+            const actions = document.createElement("td");
+
+            const editButton = document.createElement("button");
+            editButton.textContent = "Edit";
+            editButton.className = "button";
+            editButton.type = "button";
+
+            editButton.addEventListener("click", () => {
+                vehicleId.value = vehicle.vehicle_id;
+                document.getElementById("vehicle_code").value =
+                    vehicle.vehicle_code;
+                document.getElementById("vehicle_type").value =
+                    vehicle.vehicle_type;
+                document.getElementById("fuel_type").value =
+                    vehicle.fuel_type;
+
+                document.getElementById("formTitle").textContent =
+                    "Edit Vehicle";
+                saveButton.textContent = "Update Vehicle";
+                cancelButton.hidden = false;
+
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+
+            const deleteButton = document.createElement("button");
+            deleteButton.textContent = "Delete";
+            deleteButton.className = "button danger";
+            deleteButton.type = "button";
+
+            deleteButton.addEventListener("click", () => {
+                deleteVehicle(vehicle.vehicle_id);
+            });
+
+            actions.appendChild(editButton);
+            actions.appendChild(deleteButton);
+            row.appendChild(actions);
+
+            vehiclesBody.appendChild(row);
+        });
+
+    } catch (error) {
+        document.getElementById("vehiclesMessage").textContent =
+            error.message;
+    }
+}
+
+form.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const id = vehicleId.value;
+
+    const data = {
+        vehicle_code: document.getElementById("vehicle_code").value,
+        vehicle_type: document.getElementById("vehicle_type").value,
+        fuel_type: document.getElementById("fuel_type").value
+    };
+
+    const url = id ? `/vehicles/${id}` : "/vehicles";
+    const method = id ? "PUT" : "POST";
+
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || "Operation failed");
+        }
+
+        message.textContent = result.message;
+        resetForm();
+        await loadVehicles();
+
+    } catch (error) {
+        message.textContent = error.message;
+    }
+});
+
+async function deleteVehicle(id) {
+    if (!confirm("Are you sure you want to delete this vehicle?")) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/vehicles/${id}`, {
+            method: "DELETE"
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || "Could not delete vehicle");
+        }
+
+        message.textContent = result.message;
+        await loadVehicles();
+
+    } catch (error) {
+        message.textContent = error.message;
+    }
+}
+
+function resetForm() {
+    form.reset();
+    vehicleId.value = "";
+    document.getElementById("formTitle").textContent =
+        "Add New Vehicle";
+    saveButton.textContent = "Add Vehicle";
+    cancelButton.hidden = true;
+}
+
+cancelButton.addEventListener("click", resetForm);
+
+loadVehicles();
+</script>
+
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Fuel Expense Charts | Fuel Tracker{% endblock %}
+
+{% block content %}
+<section class="welcome">
+    <h2>Fuel expense charts</h2>
+    <p>Compare overall spend and each vehicle’s share of your fuel budget.</p>
+</section>
+
+<section class="dashboard-cards" aria-label="Fuel expense visualizations">
+    <article class="card">
+        <h3>Total spend by vehicle</h3>
+        <p>Compare recorded fuel expenses across the fleet.</p>
+        <img src="{{ url_for('expense_chart_image') }}" alt="Bar chart of total fuel expenses by vehicle">
+    </article>
+    <article class="card">
+        <h3>Expense share</h3>
+        <p>See the proportion of total spend assigned to each vehicle.</p>
+        <img src="{{ url_for('expense_pie_chart_image') }}" alt="Pie chart showing each vehicle’s share of fuel expenses">
+    </article>
+</section>
+
+<a class="button secondary" href="{{ url_for('reports_index') }}">Back to reports</a>
+{% endblock %}

@@ -1,0 +1,238 @@
+
+{% extends "base.html" %}
+
+{% block title %}Fuel Records | Fuel Tracker{% endblock %}
+
+{% block content %}
+
+<section class="welcome">
+    <h2>Fuel Records</h2>
+    <p>View, edit and delete fuel entries saved in your database.</p>
+</section>
+
+<section class="card">
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Record ID</th>
+                    <th>Vehicle ID</th>
+                    <th>Fill Date</th>
+                    <th>Odometer (km)</th>
+                    <th>Litres</th>
+                    <th>Total Cost (₹)</th>
+                    <th>Full Tank</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody id="recordsBody">
+                <tr>
+                    <td colspan="8">Loading records...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p id="recordsMessage" role="status"></p>
+</section>
+
+<section class="card fuel-form-card" id="editPanel" hidden>
+    <h3>Edit Fuel Record</h3>
+
+    <form id="editForm">
+        <input type="hidden" id="edit_record_id">
+
+        <label for="edit_fill_date">Fill Date</label>
+        <input type="date" id="edit_fill_date" required>
+
+        <label for="edit_odometer">Odometer Reading (km)</label>
+        <input type="number" id="edit_odometer"
+               min="0" step="any" required>
+
+        <label for="edit_litres">Fuel (litres)</label>
+        <input type="number" id="edit_litres"
+               min="0.001" step="any" required>
+
+        <label for="edit_cost">Total Cost (₹)</label>
+        <input type="number" id="edit_cost"
+               min="0" step="any" required>
+
+        <label for="edit_full_tank">Was the tank filled completely?</label>
+        <select id="edit_full_tank" required>
+            <option value="1">Yes</option>
+            <option value="0">No</option>
+        </select>
+
+        <button type="submit" class="button">Save Changes</button>
+        <button type="button" class="button secondary"
+                id="cancelEdit">Cancel</button>
+    </form>
+
+    <p id="editMessage" role="status"></p>
+</section>
+
+<script>
+const recordsBody = document.getElementById("recordsBody");
+const recordsMessage = document.getElementById("recordsMessage");
+const editPanel = document.getElementById("editPanel");
+const editForm = document.getElementById("editForm");
+const editMessage = document.getElementById("editMessage");
+
+async function loadRecords() {
+    try {
+        const response = await fetch("/fuel-records");
+
+        if (!response.ok) {
+            throw new Error("Could not load fuel records");
+        }
+
+        const records = await response.json();
+        recordsBody.replaceChildren();
+
+        if (records.length === 0) {
+            recordsBody.innerHTML =
+                '<tr><td colspan="8">No fuel records found.</td></tr>';
+            return;
+        }
+
+        records.forEach(record => {
+            const row = document.createElement("tr");
+
+            const values = [
+                record.record_id,
+                record.vehicle_id,
+                record.fill_date,
+                record.odometer_km,
+                record.litres,
+                record.total_cost,
+                Number(record.full_tank_flag) === 1 ? "Yes" : "No"
+            ];
+
+            values.forEach(value => {
+                const cell = document.createElement("td");
+                cell.textContent = value ?? "";
+                row.appendChild(cell);
+            });
+
+            const actions = document.createElement("td");
+
+            const editButton = document.createElement("button");
+            editButton.textContent = "Edit";
+            editButton.className = "button";
+            editButton.type = "button";
+
+            editButton.addEventListener("click", () => {
+                openEditForm(record);
+            });
+
+            const deleteButton = document.createElement("button");
+            deleteButton.textContent = "Delete";
+            deleteButton.className = "button danger";
+            deleteButton.type = "button";
+
+            deleteButton.addEventListener("click", () => {
+                deleteRecord(record.record_id);
+            });
+
+            actions.appendChild(editButton);
+            actions.appendChild(deleteButton);
+            row.appendChild(actions);
+
+            recordsBody.appendChild(row);
+        });
+
+    } catch (error) {
+        recordsMessage.textContent = error.message;
+    }
+}
+
+function openEditForm(record) {
+    document.getElementById("edit_record_id").value = record.record_id;
+    document.getElementById("edit_fill_date").value =
+        String(record.fill_date).slice(0, 10);
+    document.getElementById("edit_odometer").value = record.odometer_km;
+    document.getElementById("edit_litres").value = record.litres;
+    document.getElementById("edit_cost").value = record.total_cost;
+    document.getElementById("edit_full_tank").value =
+        Number(record.full_tank_flag);
+
+    editMessage.textContent = "";
+    editPanel.hidden = false;
+
+    editPanel.scrollIntoView({ behavior: "smooth" });
+}
+
+editForm.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const id = document.getElementById("edit_record_id").value;
+
+    const data = {
+        fill_date: document.getElementById("edit_fill_date").value,
+        odometer_km: document.getElementById("edit_odometer").value,
+        litres: document.getElementById("edit_litres").value,
+        total_cost: document.getElementById("edit_cost").value,
+        full_tank_flag: Number(
+            document.getElementById("edit_full_tank").value
+        )
+    };
+
+    try {
+        const response = await fetch(`/fuel-records/${id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || "Could not update record");
+        }
+
+        editMessage.textContent = result.message;
+        editPanel.hidden = true;
+
+        await loadRecords();
+
+    } catch (error) {
+        editMessage.textContent = error.message;
+    }
+});
+
+async function deleteRecord(id) {
+    if (!confirm("Are you sure you want to delete this fuel record?")) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/fuel-records/${id}`, {
+            method: "DELETE"
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || "Could not delete record");
+        }
+
+        recordsMessage.textContent = result.message;
+        await loadRecords();
+
+    } catch (error) {
+        recordsMessage.textContent = error.message;
+    }
+}
+
+document.getElementById("cancelEdit").addEventListener("click", () => {
+    editPanel.hidden = true;
+    editForm.reset();
+});
+
+loadRecords();
+</script>
+
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | Fuel Tracker{% endblock %}
+
+{% block content %}
+<section class="welcome">
+    <h2>Fleet dashboard</h2>
+    <p>A clear view of your vehicles, fill-ups, and fuel spend.</p>
+</section>
+
+<section class="dashboard-cards" aria-label="Fleet summary">
+    <article class="card">
+        <h3>Total vehicles</h3>
+        <p>{{ total_vehicles }}</p>
+    </article>
+    <article class="card">
+        <h3>Fuel records</h3>
+        <p>{{ total_records }}</p>
+    </article>
+    <article class="card">
+        <h3>Total fuel spend</h3>
+        <p>₹{{ "%.2f"|format(total_expenses) }}</p>
+    </article>
+</section>
+
+<section class="panel">
+    <h3>Quick actions</h3>
+    <a class="button" href="{{ url_for('add_fuel_page') }}">＋ Add fuel record</a>
+    <a class="button secondary" href="{{ url_for('reports_index') }}">Explore reports</a>
+</section>
+{% endblock %}

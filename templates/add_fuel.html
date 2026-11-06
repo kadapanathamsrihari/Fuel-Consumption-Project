@@ -1,0 +1,110 @@
+
+{% extends "base.html" %}
+
+{% block title %}Add Fuel Record | Fuel Tracker{% endblock %}
+
+{% block content %}
+<section class="welcome">
+    <h2>Add Fuel Record</h2>
+    <p>Enter the details of your latest fuel fill-up.</p>
+</section>
+
+<section class="card fuel-form-card">
+    <form id="fuelForm">
+        <label for="vehicle_id">Vehicle</label>
+        <select id="vehicle_id" name="vehicle_id" required>
+            <option value="">Select a vehicle</option>
+        </select>
+
+        <label for="fill_date">Fill Date</label>
+        <input type="date" id="fill_date" name="fill_date" required>
+
+        <label for="odometer_km">Odometer Reading (km)</label>
+        <input type="number" id="odometer_km" name="odometer_km"
+               min="0" step="any" required>
+
+        <label for="litres">Fuel (litres)</label>
+        <input type="number" id="litres" name="litres"
+               min="0.001" step="any" required>
+
+        <label for="total_cost">Total Cost (₹)</label>
+        <input type="number" id="total_cost" name="total_cost"
+               min="0" step="any" required>
+
+        <label for="full_tank_flag">Was the tank filled completely?</label>
+        <select id="full_tank_flag" name="full_tank_flag" required>
+            <option value="1">Yes</option>
+            <option value="0">No</option>
+        </select>
+
+        <button type="submit" class="button">Save Fuel Record</button>
+        <p id="formMessage" role="status"></p>
+    </form>
+</section>
+
+<script>
+const form = document.getElementById("fuelForm");
+const vehicleSelect = document.getElementById("vehicle_id");
+const message = document.getElementById("formMessage");
+
+async function loadVehicles() {
+    try {
+        const response = await fetch("/vehicles");
+
+        if (!response.ok) {
+            throw new Error("Could not load vehicles");
+        }
+
+        const vehicles = await response.json();
+
+        vehicles.forEach(vehicle => {
+            const option = document.createElement("option");
+            option.value = vehicle.vehicle_id;
+            option.textContent =
+                `${vehicle.vehicle_code} - ${vehicle.vehicle_type}`;
+            vehicleSelect.appendChild(option);
+        });
+    } catch (error) {
+        message.textContent = error.message;
+    }
+}
+
+form.addEventListener("submit", async event => {
+    event.preventDefault();
+    message.textContent = "Saving record...";
+
+    const data = {
+        vehicle_id: Number(form.vehicle_id.value),
+        fill_date: form.fill_date.value,
+        odometer_km: form.odometer_km.value,
+        litres: form.litres.value,
+        total_cost: form.total_cost.value,
+        full_tank_flag: Number(form.full_tank_flag.value)
+    };
+
+    try {
+        const response = await fetch("/fuel-records", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || "Could not save record");
+        }
+
+        message.textContent =
+            `Success! Fuel record ID: ${result.record_id}`;
+        form.reset();
+    } catch (error) {
+        message.textContent = error.message;
+    }
+});
+
+loadVehicles();
+</script>
+{% endblock %}

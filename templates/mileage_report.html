@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Mileage Report | Fuel Tracker{% endblock %}
+
+{% block content %}
+<section class="welcome">
+    <h2>Mileage Report</h2>
+    <p>Distance travelled and calculated fuel efficiency for each vehicle.</p>
+</section>
+
+<section class="card">
+    {% if records %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Vehicle</th>
+                    <th>Fill Date</th>
+                    <th>Distance (km)</th>
+                    <th>Mileage (km/L)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td>{{ record.vehicle_code }}</td>
+                    <td>{{ record.fill_date }}</td>
+                    <td>
+                        {% if record.distance_km is not none %}
+                            {{ "%.2f"|format(record.distance_km) }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if record.mileage_kmpl is not none %}
+                            {{ "%.2f"|format(record.mileage_kmpl) }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p>No fuel records are available for the mileage report.</p>
+    {% endif %}
+
+    <a class="button" href="{{ url_for('reports_index') }}">Back to Reports</a>
+</section>
+{% endblock %}

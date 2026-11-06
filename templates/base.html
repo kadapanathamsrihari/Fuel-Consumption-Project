@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Fuel Tracker{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Fuel Consumption Tracker</h1>
+        <nav aria-label="Main navigation">
+            <a class="{% if request.endpoint == 'home' %}active{% endif %}" href="{{ url_for('home') }}">Dashboard</a>
+            <a class="{% if request.endpoint == 'add_fuel_page' %}active{% endif %}" href="{{ url_for('add_fuel_page') }}">Add Fuel</a>
+            <a class="{% if request.endpoint == 'records_page' %}active{% endif %}" href="{{ url_for('records_page') }}">Fuel Records</a>
+            <a class="{% if request.endpoint == 'vehicles_page' %}active{% endif %}" href="{{ url_for('vehicles_page') }}">Vehicles</a>
+            <a class="{% if request.endpoint in ['reports_index', 'mileage_report', 'expenses_report', 'monthly_report', 'charts_page'] %}active{% endif %}" href="{{ url_for('reports_index') }}">Reports</a>
+        </nav>
+    </header>
+    <main>{% block content %}{% endblock %}</main>
+</body>
+</html>
